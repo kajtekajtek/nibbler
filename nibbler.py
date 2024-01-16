@@ -1,15 +1,15 @@
 from header import *
 
 if __name__ == '__main__':
-    handleArgs()
+        handleArgs()
 
-    # open file and read its contents
-    file_name = sys.argv[1]
-    contents = openFile(file_name)
+        # open file and read its contents
+        vars["file_name"] = sys.argv[1]
+        contents = openReadFile(vars["file_name"])
 
-    clear()
-    printPage(contents)
+        clear()
+        printPage(contents)
 
-    while True:
-        userInput(contents)
+        while True:
+            userInput(contents)
 
