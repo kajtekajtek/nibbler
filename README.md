@@ -2,6 +2,7 @@
 ## Command line based hex editor written in Python.
 **Usage:**
 Run `python ./nibbler.py [filepath]`
+
 Type `h` to show the list of available commands.
 
 **Functionality:**
