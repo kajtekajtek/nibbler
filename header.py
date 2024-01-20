@@ -10,7 +10,6 @@ vars = {
         "current_page":0
         }
 
-# raw_contents = variable of the bytes type containing original file contents
 def processContents(raw_contents):
     line_length = vars["line_length"]
     page_size = vars["page_size"]
@@ -21,13 +20,13 @@ def processContents(raw_contents):
 
     contents = []
 
-    # for every page made of page_size lines of line_length length 
+    # for every page made of page_size lines of line_length character length 
     for i in range(0, len(contents_string), page_size * line_length):
         page = []
         # for every line
         for j in range(0, page_size * line_length, line_length):
-            # from page index + line index position append next line_length
-            # characters to the current page
+            # from page + line position append next line_length characters
+            # to the current page
             page.append(contents_string[i + j:i + j + line_length]) 
 
         contents.append(page)
@@ -70,21 +69,22 @@ def handleArgs():
 
 # print page of the contents
 def printPage(contents, page_index=0):
-    line_length = vars["line_length"]
+    line_length = int(vars["line_length"] / 2)
     page_size = vars["page_size"]
+    column_width = vars["column_width"]
 
-    # address of the first byte on the line (hexdump-like)
-    byte_index = page_index * page_size * int(line_length/2)
+    # address of the first byte in the line
+    byte_index = page_index * page_size * line_length
 
     for line in contents[page_index]:
         # C string style of formating for padding the address with 0s 
         line_to_print = '%07x'%byte_index + " "
-        # printing contents as column_width wide columns
-        line_to_print += " ".join(line[i:i+vars["column_width"]] for i in range(0, len(line), vars["column_width"]))
+        # printing contents as column_width character wide columns
+        line_to_print += " ".join(line[i:i + column_width] for i in range(0, len(line), column_width))
 
         print(line_to_print)
 
-        byte_index += int(line_length / 2)
+        byte_index += line_length
 
 # clear screen
 def clear():
@@ -101,7 +101,9 @@ def pageIndexFromAddr(addr):
     page_size = vars["page_size"]
     line_length = int(vars["line_length"] / 2)
     
-    page_addr = addr - (addr % (page_size*line_length))
+    # round the address to the first address of its page
+    page_addr = addr - (addr % (page_size * line_length))
+    # divide page address by number of bytes on the page
     page_index = page_addr / (page_size * line_length)
 
     return int(page_index)
@@ -111,6 +113,7 @@ def replaceSingleByte(contents, page_index, addr):
     line_length = int(vars["line_length"]/2)
 
     try:
+        # calculating position of the byte to replace
         addr = int(addr, 16)
 
         line_index = int((addr % (page_size * line_length)) / line_length)
@@ -174,23 +177,23 @@ def userInput(contents):
                 addr = args[1] 
                 page_index = pageIndexFromAddr(addr)
                 if page_index in range(len(contents)):
-                    vars["current_value"] = page_index
+                    vars["current_page"] = page_index
 
                     clear()
-                    printPage(contents, vars["current_value"])
+                    printPage(contents, vars["current_page"])
 
                     replaceSingleByte(contents, page_index, addr)
 
                     clear()
-                    printPage(contents, vars["current_value"])
+                    printPage(contents, vars["current_page"])
                 else:
                     print("Out of range address")
             except Exception as error:
                 print("usage: r [address]")
-                print(error)
         # change the number of bytes displayed in one column
         case ['column', 'width', *_]:
             args = ch.split()
+
             if len(args) == 3:
                 try:
                     val = int(args[2])
@@ -204,6 +207,7 @@ def userInput(contents):
                     print("invalid column width value")
             else:
                 print("usage: column width [value]")
+        # write
         case ['w', *_]:
             args = ch.split()
             if len(args) == 1:
@@ -212,6 +216,7 @@ def userInput(contents):
                 openWriteFile(args[1], contents)
             else:
                 print("usage: w [filename(optional)]")
+        # write and quit
         case ['wq']:
             openWriteFile(vars["file_name"], contents)
             clear()
@@ -223,7 +228,7 @@ def userInput(contents):
             print("goto [address] - go to specified position")
             print("r [addr] - replace byte on specified address")
             print("column width [value] - change the number of bytes displayed in one column")
-            print("w - write")
+            print("w [filename(optional)] - overwrite opened file or write to a new one")
             print("wq - write and quit")
             print("q - quit")
         # quit

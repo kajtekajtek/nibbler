@@ -1,6 +1,7 @@
 from header import *
 
 if __name__ == '__main__':
+        # command line arguments
         handleArgs()
 
         # open file and read its contents
